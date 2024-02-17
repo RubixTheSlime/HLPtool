@@ -231,6 +231,10 @@ void test() {
 }
 
 int main(int argc, char** argv) {
+    if (!__builtin_cpu_supports("avx2")) {
+        printf("this program requires a CPU that supports AVX2, which yours doesn't. sorry, you're just plain out of luck.\n");
+        return 1;
+    }
     /* test(); return 0; */
     setlocale(LC_NUMERIC, "");
 

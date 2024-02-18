@@ -3,9 +3,15 @@
 #include <stdint.h>
 
 enum SearchAccuracy { ACCURACY_REDUCED=-1, ACCURACY_NORMAL, ACCURACY_INCREASED, ACCURACY_PERFECT };
+enum SolveConfigError { HLP_ERROR_BLANK=1, HLP_ERROR_NULL, HLP_ERROR_MALFORMED, HLP_ERROR_TOO_LONG };
+enum HlpSolveType { HLP_SOLVE_TYPE_EXACT, HLP_SOLVE_TYPE_PARTIAL, HLP_SOLVE_TYPE_RANGED };
 
-extern void bitonic_sort4x16x8(uint8_t* arrays);
-
+typedef struct hlp_request_s {
+    uint64_t mins;
+    uint64_t maxs;
+    enum HlpSolveType solveType;
+    enum SolveConfigError error;
+} hlp_request_t;
 
 // the start position, or at least the pretty one that can be used outside the solver
 extern const uint64_t hlpStartPos;
@@ -26,8 +32,13 @@ extern uint64_t layer(uint64_t map, uint16_t config);
 /* search for a solution for the given map
  * returns length of chain
  */
-int solve(char* map, uint16_t* outputChain, int maxDepth, enum SearchAccuracy accuracy);
+int solve(hlp_request_t request, uint16_t* outputChain, int maxDepth, enum SearchAccuracy accuracy);
 
+/* parse the string into a solve request
+ */
+hlp_request_t parseHlpRequestStr(char* str);
+
+void printHlpRequest(hlp_request_t request);
 
 /* same as solve, but takes a uint64 as input
  */

@@ -13,8 +13,25 @@ int global_verbosity;
 
 void printSearch(char* map, int maxDepth, int accuracy) {
     uint16_t result[32];
-    printf("searching for %s\n", map);
-    int length = solve(map, result, maxDepth, accuracy);
+    hlp_request_t request = parseHlpRequestStr(map);
+    switch (request.error) {
+        case HLP_ERROR_NULL:
+        case HLP_ERROR_BLANK:
+            printf("Error: must provide a function to solve for\n");
+            return;
+        case HLP_ERROR_TOO_LONG:
+            printf("Error: too many values are provided\n");
+            return;
+        case HLP_ERROR_MALFORMED:
+            printf("Error: malformed expression\n");
+            return;
+    }
+
+    printf("searching for ");
+    printHlpRequest(request);
+    printf("\n");
+
+    int length = solve(request, result, maxDepth, accuracy);
 
     if (length > maxDepth) {
         printf("no result found\n");

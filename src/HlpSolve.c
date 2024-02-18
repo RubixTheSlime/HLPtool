@@ -20,16 +20,15 @@ typedef struct branch_layer_s {
     /* uint8_t separations; */
 } branch_layer_t;
 
-
+int solveType;
 
 const uint64_t hlpStartPos = 0x0123456789abcdef;
 const uint64_t startPos = 0x7f6e5d4c3b2a1908;
 const uint64_t broadcastH16 = 0x1111111111111111;
 int cacheSize = 22;
 
-uint64_t wanted;
-
-__m128i goal;
+__m128i goalMin;
+__m128i goalMax;
 
 //precomputed layer lookup tables
 uint16_t* layerConf;
@@ -72,6 +71,72 @@ __m256i lowHalvesMask256_2() {
 
 const __m128i fixUintPerm = {0x0c040d050e060f07, 0x080009010a020b03};
 
+int isHex(char c) {
+    return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+}
+
+int toHex(char c) {
+    return c - (c <= '9' ? '0' : c <= 'A' ? 'A' - 10 : 'a' - 10);
+}
+
+hlp_request_t parseHlpRequestStr(char* str) {
+    hlp_request_t result = {0};
+    if (!str){
+        result.error = HLP_ERROR_NULL;
+        return result;
+    };
+    if (!*str){
+        result.error = HLP_ERROR_BLANK;
+        return result;
+    };
+    int length = 0;
+    char* c = str;
+    while (*c) {
+        if (*(c + 1) == '-') {
+            if (!isHex(*(c + 2))) {
+                result.error = HLP_ERROR_MALFORMED;
+                return result;
+            }
+            result.mins = (result.mins << 4) | toHex(*c);
+            result.maxs = (result.maxs << 4) | toHex(*(c + 2));
+            length++;
+            c += 3;
+            continue;
+        }
+        if (*c == '.') {
+            result.mins = (result.mins << 4) | 0;
+            result.maxs = (result.maxs << 4) | 15;
+            length++;
+            c++;
+            continue;
+        }
+        if (isHex(*c)) {
+            result.mins = (result.mins << 4) | toHex(*c);
+            result.maxs = (result.maxs << 4) | toHex(*c);
+            length++;
+            c++;
+            continue;
+        }
+        result.error = HLP_ERROR_MALFORMED;
+        return result;
+    }
+ 
+    if (length > 16) {
+        result.error = HLP_ERROR_TOO_LONG;
+        return result;
+    }
+    result.mins <<= (16 - length) * 4;
+    result.maxs <<= (16 - length) * 4;
+    result.maxs |= ((1 << ((16 - length) * 4)) - 1);
+
+    if (result.mins == result.maxs)
+        result.solveType = HLP_SOLVE_TYPE_EXACT;
+    else
+        result.solveType = HLP_SOLVE_TYPE_RANGED;
+
+    return result;
+}
+
 __m128i uintToXmm(uint64_t uint) {
     __m128i input = _mm_cvtsi64_si128(uint);
     return _mm_and_si128(_mm_or_si128(_mm_slli_si128(input, 8), _mm_srli_epi64(input, 4)), lowHalvesMask128);
@@ -82,8 +147,8 @@ uint64_t xmmToUint(__m128i xmm) {
 }
 
 // converts a "nice" uint64 into one that works properly for applying precomputed maps
-uint64_t fix_uint(uint64_t uint) {
-    return xmmToUint(_mm_shuffle_epi8(uintToXmm(uint), fixUintPerm));
+__m128i prettyUintToXmm(uint64_t uint) {
+    return _mm_shuffle_epi8(uintToXmm(uint), fixUintPerm);
 }
 
 // assumes both are in the "fixed" format
@@ -153,25 +218,7 @@ inline __m256i quickGetLow15Mask() {
     return _mm256_srli_si256(ymm, 1);
 }
 
-int search_last_layer(uint64_t input, uint64_t* maps, int quantity) {
-    __m256i doubledInput = _mm256_permute4x64_epi64(_mm256_castsi128_si256(uintToXmm(input)), 0x44);
-    __m256i doubledGoal = _mm256_permute4x64_epi64(_mm256_castsi128_si256(goal), 0x44);
-
-    const __m256i splitTestMask = quickGetTestMask();
-    for (int i = (quantity - 1) / 4; i >= 0; i--) {
-        ymm_pair_t quad = quadUnpackMap(_mm256_loadu_si256(((__m256i*) maps) + i));
-        quad.ymm0 = _mm256_xor_si256(_mm256_shuffle_epi8(quad.ymm0, doubledInput), doubledGoal);
-        quad.ymm1 = _mm256_xor_si256(_mm256_shuffle_epi8(quad.ymm1, doubledInput), doubledGoal);
-        if (i && _mm256_testnzc_si256(splitTestMask, quad.ymm0) && _mm256_testnzc_si256(splitTestMask, quad.ymm1)) continue;
-        if (_mm256_testz_si256(splitTestMask, quad.ymm0)) return 4*i;
-        if (_mm256_testc_si256(splitTestMask, quad.ymm0)) return 4*i + 2;
-        if (_mm256_testz_si256(splitTestMask, quad.ymm1)) return 4*i + 1;
-        if (_mm256_testc_si256(splitTestMask, quad.ymm1)) return 4*i + 3;
-    }
-    return -1;
-}
-
-inline int getLegalDistCheckMask(__m256i sortedYmm, int threshhold) {
+inline int getLegalDistCheckMaskExact(__m256i sortedYmm, int threshhold) {
     const __m256i splitTestMask = quickGetTestMask();
     const __m256i low15Mask = quickGetLow15Mask();
     __m256i final = _mm256_and_si256(sortedYmm, lowHalvesMask256);
@@ -190,15 +237,14 @@ inline int getLegalDistCheckMask(__m256i sortedYmm, int threshhold) {
     return mask;
 }
 
-//extern
-int batch_apply_and_check(
+int batchApplyAndCheckExact(
         uint64_t input,
         uint64_t* maps,
         branch_layer_t* outputs,
         int quantity,
         int threshhold) {
     __m256i doubledInput = _mm256_permute4x64_epi64(_mm256_castsi128_si256(uintToXmm(input)), 0x44);
-    __m256i doubledGoal = _mm256_permute4x64_epi64(_mm256_castsi128_si256(goal), 0x44);
+    __m256i doubledGoal = _mm256_permute4x64_epi64(_mm256_castsi128_si256(goalMin), 0x44);
 
     branch_layer_t* currentOutput = outputs;
 
@@ -210,7 +256,7 @@ int batch_apply_and_check(
         ymm_pair_t sortedQuad = { _mm256_or_si256(doubledGoal, _mm256_slli_epi64(quad.ymm0, 4)),
             _mm256_or_si256(doubledGoal, _mm256_slli_epi64(quad.ymm1, 4)) };
         sortedQuad = bitonic_sort4x16x8_inner(sortedQuad);
-        int mask = getLegalDistCheckMask(sortedQuad.ymm0, threshhold) | (getLegalDistCheckMask(sortedQuad.ymm1, threshhold) << 1);
+        int mask = getLegalDistCheckMaskExact(sortedQuad.ymm0, threshhold) | (getLegalDistCheckMaskExact(sortedQuad.ymm1, threshhold) << 1);
         if (i & (mask == 0)) continue;
         __m256i packed = quadPackMap(quad);
 
@@ -234,9 +280,6 @@ int batch_apply_and_check(
 
     return currentOutput - outputs;
 }
-// */
-
-
 
 //counts uniqe values, usefull for generalizable prune of layers that reduce too much from the get go
 int getGroup(uint64_t x) {
@@ -326,21 +369,40 @@ void precomputeLayers(int group) {
 }
 
 //faster implementation of searching over the last layer while checking if you found the goal, unexpectedly big optimization
-int fastLastLayerSearch(uint64_t input, int prevLayerConf) {
-    int search_size = nextValidLayersSize[prevLayerConf];
-    iter += search_size;
-    int index = search_last_layer(input, nextValidLayerLuts + 800*prevLayerConf, search_size);
-    if (index == -1) return 0;
+int fastLastLayerSearchExact(uint64_t input, int prevLayerConf) {
+    __m256i doubledInput = _mm256_permute4x64_epi64(_mm256_castsi128_si256(uintToXmm(input)), 0x44);
+    __m256i doubledGoal = _mm256_permute4x64_epi64(_mm256_castsi128_si256(goalMin), 0x44);
 
-    iter -= index;
+    __m256i* quadMaps = (__m256i*) (nextValidLayerLuts + 800*prevLayerConf);
 
-    uint16_t config = layerConf[nextValidLayers[prevLayerConf * 800 + index]];
-    if (_solutionsFound != -1) {
-        _solutionsFound++;
-        return 0;
+    iter += nextValidLayersSize[prevLayerConf];
+    const __m256i splitTestMask = quickGetTestMask();
+    for (int i = (nextValidLayersSize[prevLayerConf] - 1) / 4; i >= 0; i--) {
+        ymm_pair_t quad = quadUnpackMap(_mm256_loadu_si256(quadMaps + i));
+        quad.ymm0 = _mm256_xor_si256(_mm256_shuffle_epi8(quad.ymm0, doubledInput), doubledGoal);
+        quad.ymm1 = _mm256_xor_si256(_mm256_shuffle_epi8(quad.ymm1, doubledInput), doubledGoal);
+        if (i && _mm256_testnzc_si256(splitTestMask, quad.ymm0) && _mm256_testnzc_si256(splitTestMask, quad.ymm1)) continue;
+
+        bool successes[] = {
+            _mm256_testz_si256(splitTestMask, quad.ymm0),
+            _mm256_testz_si256(splitTestMask, quad.ymm1),
+            _mm256_testc_si256(splitTestMask, quad.ymm0),
+            _mm256_testc_si256(splitTestMask, quad.ymm1)};
+
+        for (int j=0; j<4; j++) {
+            if (!successes[j]) continue;
+            int index = i * 4 + j;
+            iter -= index;
+            uint16_t config = layerConf[nextValidLayers[prevLayerConf * 800 + index]];
+            if (_solutionsFound != -1) {
+                _solutionsFound++;
+                continue;
+            }
+            if (_outputChain != 0) _outputChain[currLayer - 1] = config;
+            return 1;
+        }
     }
-    if (_outputChain != 0) _outputChain[currLayer - 1] = config;
-    return 1;
+    return 0;
 }
 
 //cache related code, used for removing identical or worse solutions
@@ -349,7 +411,6 @@ long difLayerHits = 0;
 long misses = 0;
 long bucketUtil = 0;
 long cacheChecksTotal = 0;
-
 
 typedef struct cache_entry_s {
     uint64_t map;
@@ -423,10 +484,10 @@ branch_layer_t potentialLayers[800*32];
 
 //main dfs recursive search function
 int dfs(uint64_t input, int depth, int prevLayerConf) {
-    if(depth == currLayer - 1) return fastLastLayerSearch(input, prevLayerConf);
+    if(depth == currLayer - 1) return fastLastLayerSearchExact(input, prevLayerConf);
     iter += nextValidLayersSize[prevLayerConf];
 
-    int totalNextLayersIdentified = batch_apply_and_check(
+    int totalNextLayersIdentified = batchApplyAndCheckExact(
             input,
             nextValidLayerLuts + prevLayerConf*800,
             potentialLayers + 800*depth,
@@ -459,21 +520,26 @@ int dfs(uint64_t input, int depth, int prevLayerConf) {
     return 0;
 }
 
-
-void init(uint64_t map) {
+int init(hlp_request_t request) {
     programStartT = clock();
     if (!cacheArr) cacheArr = calloc((1 << cacheSize), sizeof(cache_entry_t));
     cacheMask = (1 << cacheSize) - 1;
     iter = 0;
     cacheChecksTotal = 0;
-    wanted = fix_uint(map);
-    _uniqueOutputs = getGroup(wanted);
+
+    solveType = request.solveType;
+
+    if (solveType == HLP_SOLVE_TYPE_EXACT) {
+        _uniqueOutputs = getGroup(request.mins);
+    } else {
+        printf("you found a search mode that isn't implemented\n");
+        return 1;
+    }
+
     precomputeLayers(_uniqueOutputs);
-    goal = uintToXmm(wanted);
-}
-
-
-int searchOneDepth(int depth) {
+    
+    goalMin = prettyUintToXmm(request.mins);
+    goalMax = prettyUintToXmm(request.maxs);
     return 0;
 }
 
@@ -506,16 +572,14 @@ int singleSearchInner(int maxDepth) {
     return maxDepth + 1;
 }
 
-int singleSearch(uint64_t m, uint16_t* outputChain, int maxDepth, enum SearchAccuracy accuracy) {
+int singleSearch(hlp_request_t request, uint16_t* outputChain, int maxDepth, enum SearchAccuracy accuracy) {
     if (maxDepth < 0 || maxDepth > 31) maxDepth = 31;
-    if (m == 0) {
+    if (request.mins == 0) {
         if (outputChain) outputChain[0] = 0x2f0;
         return 1;
     }
-    if (m == hlpStartPos) return 0;
 
-
-    init(m);
+    if (init(request)) return -1;
 
     _outputChain = outputChain;
     _solutionsFound = -1;
@@ -523,15 +587,17 @@ int singleSearch(uint64_t m, uint16_t* outputChain, int maxDepth, enum SearchAcc
     return singleSearchInner(maxDepth);
 }
 
-int solveN(uint64_t m, uint16_t* outputChain, int maxDepth, enum SearchAccuracy accuracy) {
+int solve(hlp_request_t request, uint16_t* outputChain, int maxDepth, enum SearchAccuracy accuracy) {
     if (maxDepth < 0 || maxDepth > 31) maxDepth = 31;
-    if (m == 0) {
+    if (request.mins == 0) {
         if (outputChain) outputChain[0] = 0x2f0;
         return 1;
     }
-    if (m == hlpStartPos) return 0;
 
-    init(m);
+    if (init(request)) {
+        printf("an error occurred\n");
+        return -1;
+    }
 
     _outputChain = outputChain;
     _solutionsFound = -1;
@@ -562,12 +628,6 @@ int solveN(uint64_t m, uint16_t* outputChain, int maxDepth, enum SearchAccuracy 
     return result;
 }
 
-int solve(char* map, uint16_t* outputChain, int maxDepth, enum SearchAccuracy accuracy) {
-    return solveN(strtoull(map, 0, 16), outputChain, maxDepth, accuracy);
-}
-
-
-
 void hlpSetCacheSize(int size) {
     if (cacheArr) {
         free(cacheArr);
@@ -591,6 +651,10 @@ void printChain(uint16_t* chain, int length) {
         printf(layerStrings[conf >> 8], (conf >> 4) & 15, conf & 15);
         if (i < length - 1) printf(";  ");
     }
+}
+
+void printHlpRequest(hlp_request_t request) {
+    printf("%016lx", request.mins);
 }
 
 //#pragma GCC pop_options

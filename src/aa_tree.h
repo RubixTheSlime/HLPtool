@@ -1,41 +1,50 @@
-#include<stdint.h>
-// taken from https://github.com/h-hayakawa/aa-tree
-// it was the first one i found that worked without it taking forever to adjust
+#ifndef AA_TREE_H
+#define AA_TREE_H
 
-/* int以外を使いたかったらここから改造 */
-typedef uint64_t aatree_val;
+#include <stdio.h>
 
-typedef struct __aatree_node__{
-      int32_t level; /* AA-tree制御用変数 */
-        aatree_val val; /* 格納してる値本体 */
-          struct __aatree_node__ *left;
-            struct __aatree_node__ *right;
-} aatree_node;
+typedef enum trav { TRAV_IN, TRAV_POST, TRAV_PRE } trav;
+typedef struct aa aa;
 
-/* 値削除用制御変数 */
-struct __del_info__{
-      aatree_val val;
-        aatree_node *last;
-          aatree_node *del;
-};
+/* NULL on error, comp must be a comparator that returns:
+ *  -1 when l < r
+ *   0 when l == r
+ *   1 when l > r */
+aa *aa_new(int (*comp) (void *l, void *r));
+/* 0 on no error, 1 on no tree, 2 on memory error, 3 on duplicate if dup not set, 4 on dup error
+ * dup returns 0 on no error, 1 on error */
+int aa_add(aa * tree, void *data, int (*dup) (void *orig, void *new));
+/* 0 on no error, 1 on no tree, 2 on dup error
+ * dup returns 0 on no error, 1 on error 
+ * if del exists, it is applied to the data */
+int aa_delete(aa * tree, void *data, int (*dup) (void *orig, void *data),
+              void (*del) (void *));
+/* NULL on error or not found */
+void *aa_find(aa * tree, void *data);
+/* returns length */
+int aa_to_array(aa * tree, void *array, size_t size);
+/* 0 on no error, 1 on no tree, 2 on bad trav (not one of TRAV_IN, TRAV_POST, TRAV_PRE) */
+int aa_traverse(aa * tree, void *(*func) (void *data), trav t);
+/* NULL on error */
+void *aa_get_here(aa * tree);
+/* 0 on no error, 1 on no tree, 2 on empty tree, dup stuff as above; replaces if no dup */
+int aa_set_here(aa * tree, void *data,
+                int (*dup) (void *orig, void *data));
+/* 1 if true, 0 if false, -1 on error */
+int aa_has_left(aa * tree);
+/* 1 if true, 0 if false, -1 on error */
+int aa_has_right(aa * tree);
+/* 0 on no error, 1 on error */
+int aa_go_right(aa * tree);
+/* 0 on no error, 1 on error */
+int aa_go_left(aa * tree);
+/* 0 on no error, 1 on error */
+int aa_to_root(aa * tree);
+/* no-op on error */
+void aa_freedata(aa * tree);
+/* no-op on error */
+void aa_free(aa * tree);
+/* 0 on no error, -1 on no tree, -2 on empty tree */
+int aa_print(aa * tree, FILE * fp, void (*printer) (FILE *, void *));
 
-/* nilを定義せずNULLを使うとロクなことがない */
-static aatree_node nil = {0, 0, &nil, &nil};
-
-/* xが木の中に無ければ追加、flagに1をセット、あれば何もせず、flagに0をセット、操作後の木のrootを返す */
-aatree_node *aa_tree_insert(aatree_val x, aatree_node *tree, int64_t *flag);
-
-/* xが木の中にあれば削除、flagに1をセット、無ければ何もせず、flagに0をセット、操作後の木のrootを返す */
-aatree_node *aa_tree_delete(aatree_val x, aatree_node *tree, int64_t *flag);
-
-/* お掃除 */
-void aa_tree_free(aatree_node *tree);
-
-/* 木を舐めながら印字、結果はソートされた列になる */
-void aa_tree_print(aatree_node *tree);
-
-/* 木構造の中身を配列に移す、木を舐めるので自動的にソートされた結果になる */
-void aa_tree2vec(aatree_node *tree, aatree_val *dst);
-
-/* aatree_valが木の中にあるかどうか、あれば1、なければ0 */
-int aa_tree_search(aatree_node *tree, aatree_val x);
+#endif                          /* AA_TREE_H */

@@ -1,14 +1,24 @@
 AUTOMAKE_OPTIONS = subdir-objects
 SUBDIRS = lib
-bin_PROGRAMS = hlpsolve
+bin_PROGRAMS = hlpt
 
-hlpsolve_SOURCES = ./src/main.c ./src/HlpSolve.h ./src/HlpSolve.c ./src/bitonicSort.h ./src/bitonicSort.c ./src/aa_tree.h ./src/aa_tree.c
+hlpt_SOURCES = ./src/main.c
+hlpt_SOURCES += ./src/aa_tree.c
+hlpt_SOURCES += ./src/bitonic_sort.c
+hlpt_SOURCES += ./src/command/dbin_command.c
+hlpt_SOURCES += ./src/command/hex.c
+hlpt_SOURCES += ./src/search/dbin_random.c
+hlpt_SOURCES += ./src/search/hlp_random.c
+hlpt_SOURCES += ./src/solver/dbin_solve.c
+hlpt_SOURCES += ./src/solver/hlp_solve.c
+hlpt_SOURCES += ./src/vector_tools.c
+hlpt_SOURCES += ./src/redstone.c
 
 EXTRA_DIST = m4/gnulib-cache.m4
 
 ACLOCAL_AMFLAGS = -I m4
 CCAS = nasm
-AM_CFLAGS = -march=native 
+AM_CFLAGS = -march=native
 AM_CPPFLAGS = -I$(top_builddir)/lib -I$(top_srcdir)/lib
 LDADD = lib/libgnu.a
 

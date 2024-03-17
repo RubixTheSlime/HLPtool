@@ -47,10 +47,20 @@ searching for 3141 5926 XXXX XXXX
 result found, length 8 (3141 5926 2951 4133):  0, *E;  9, *9;  B, *B;  ^9, *F;  2, 0;  E, *C;  *5, *D;  *4, 4
 ```
 
-## Optimal solutions
-The solutions found are almost always the shortest possible length. However, at times it produces a solution a layer or two longer than the true minimum. This is intentional but can be prevented by passing in `-p` or `--perfect`. However, this generally makes it take significantly longer to find a solution, and most of the time it's the same solution it would've found otherwise, which is why this is not the default behaviour.
+Note: wildcards and ranges are only available in 1.1; however, 1.0 mistakenly (and incorrectly) tries to interpret them anyways.
 
-(There would be an example of this behaviour here, but a recent change made it better at finding optimal solutions and now the known unoptimal cases are optimal)
+## Optimal solutions
+The solutions found are almost always the shortest possible length. However, at times it produces a solution a layer or two longer than the true minimum. This is intentional but can be prevented by passing in `-p` or `--perfect`. However, this generally makes it take significantly longer to find a solution, and most of the time it's the same solution it would've found otherwise, which is why this is not the default behaviour. Though, it can, in very specific situations, be way off:
+
+```ShellSession
+$ hlpt hex 02468ace02468ace
+searching for 0246 8ACE 0246 8ACE
+result found, length 15:  8, *7;  0, *F;  9, 0;  A, 2;  0, 1;  0, *4;  3, 0;  B, *5;  0, *9;  E, *D;  F, *B;  B, *D;  4, 0;  *1, 1;  A, *9
+
+$ hlpt hex 02468ace02468ace -p
+searching for 0246 8ACE 0246 8ACE
+result found, length 10:  8, *7;  0, *F;  C, *B;  D, *8;  7, *B;  F, *F;  ^7, *D;  C, *E;  C, *D;  4, 2
+```
 
 ## Dual Binary
 The tool is also equipped with a dual binary solver, which can be accessed using `hlpt 2bin`. The main format is to list out all the first bits (starting at 0), then the second bits. However, this can be changed with `-t` to group the input by pairs instead of by output index, and `-s` to swap the bits, as if the chain was built mirrored. Like the hex solver, `.`, `x`, and leaving out the end can be used for wildcards. Unlike the hex solver, there is no `-p`, as the solver always produces optimal length solutions (barring unfound bugs).

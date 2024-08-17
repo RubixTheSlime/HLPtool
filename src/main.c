@@ -8,7 +8,6 @@
 
 #include "arg_global.h"
 #include "solver/hlp_solve.h"
-#include "command/cat.h"
 #include "command/hex.h"
 #include "command/dbin_command.h"
 #include "search/hlp_random.h"
@@ -17,7 +16,6 @@
 union arg_settings_sub {
     struct arg_settings_solver_hex solver_hex;
     struct arg_settings_command_hex command_hex;
-    struct arg_settings_command_cat command_cat;
     struct arg_settings_search_hlp_random search_hlp_random;
     struct arg_settings_search_dbin_random search_dbin_random;
 };

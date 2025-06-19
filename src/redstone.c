@@ -4,6 +4,7 @@
 #include "stdio.h"
 #include "time.h"
 #include "stdlib.h"
+#include <glib.h>
 
 
 static int verbosity = 0;
@@ -65,10 +66,10 @@ struct precomputed_hex_layer* precompute_hex_layers(int group, int direction) {
     int layer_count = 0;
     uint16_t* layer_configs_tmp = malloc(LAYER_COUNT_ESTIMATE * sizeof(uint16_t));
 
-    aa* unique_next_layers_tree = aa_new(cmp_int64);
-    uint64_t* tree_data = malloc(LAYER_COUNT_ESTIMATE * sizeof(uint64_t));
+    GHashTable* unique_next_layers = g_hash_table_new(g_int64_hash, g_int64_equal);
+    uint64_t* table_data = malloc(LAYER_COUNT_ESTIMATE * sizeof(uint64_t));
     uint64_t identity = IDENTITY_PERM_PK64;
-    aa_add(unique_next_layers_tree, &identity, NULL);
+    g_hash_table_add(unique_next_layers, &identity);
 
     clock_t time_start = clock();
     if (verbosity >= 3) printf("starting layer precompute\n");
@@ -78,16 +79,15 @@ struct precomputed_hex_layer* precompute_hex_layers(int group, int direction) {
         uint64_t output = hex_layer64(IDENTITY_PERM_PK64, conf);
         // skip if doesn't pass tests
         if (get_group64(output) < group) continue;
-        if (aa_find(unique_next_layers_tree, &output)) continue;
+        if (g_hash_table_contains(unique_next_layers, &output)) continue;
 
         // passed, add it
-        tree_data[layer_count] = output;
-        aa_add(unique_next_layers_tree, tree_data + layer_count, NULL);
+        table_data[layer_count] = output;
+        g_hash_table_add(unique_next_layers, table_data + layer_count);
         layer_configs_tmp[layer_count] = conf;
         layer_count++;
     }
-    free(tree_data);
-    aa_free(unique_next_layers_tree);
+    free(table_data);
 
     // now set up the array of layers
     // first is always identity, ie the first layer
@@ -102,9 +102,9 @@ struct precomputed_hex_layer* precompute_hex_layers(int group, int direction) {
     free(layer_configs_tmp); // no longer needed
 
     // need to re set up tree data to allocate new space, realloc wont work
-    tree_data = malloc((layer_count + 1) * layer_count * sizeof(uint64_t));
-    unique_next_layers_tree = aa_new(cmp_int64);
-    aa_add(unique_next_layers_tree, &identity, NULL);
+    table_data = malloc((layer_count + 1) * layer_count * sizeof(uint64_t));
+    g_hash_table_remove_all(unique_next_layers);
+    g_hash_table_add(unique_next_layers, &identity);
 
     int next_layer_count = 0;
     int map_spaces_needed = 0;
@@ -128,9 +128,9 @@ struct precomputed_hex_layer* precompute_hex_layers(int group, int direction) {
                 apply_mapping_packed64(first_layer->map, second_layer->map);
             if (get_group64(output) < group) continue;
 
-            if (aa_find(unique_next_layers_tree, &output)) continue;
-            tree_data[next_layer_count] = output;
-            aa_add(unique_next_layers_tree, tree_data + next_layer_count, NULL);
+            if (g_hash_table_contains(unique_next_layers, &output)) continue;
+            table_data[next_layer_count] = output;
+            g_hash_table_add(unique_next_layers, table_data + next_layer_count);
 
             next_layer_indices[next_layer_count] = second_layer_i;
             next_layer_count++;
@@ -140,8 +140,8 @@ struct precomputed_hex_layer* precompute_hex_layers(int group, int direction) {
         // they are expected to be handled in bulk with vector processing
         map_spaces_needed += round_up(first_layer->next_layer_count, MAP_ARRAY_ALIGNMENT);
     }
-    aa_free(unique_next_layers_tree);
-    free(tree_data);
+    g_hash_table_destroy(unique_next_layers);
+    free(table_data);
 
     // fill the next layer data
     // both of these will just be one big block containing multiple arrays

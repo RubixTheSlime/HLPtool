@@ -36,16 +36,20 @@ ADD_EXECUTABLE(hlpt
 
 
 target_link_libraries(hlpt PRIVATE ${GTKMM_LIBRARIES})
+target_link_libraries(hlpt PRIVATE ${GLIB_LIBRARIES})
 target_link_libraries(hlpt PRIVATE ${LUA_LIBRARIES})
 
 # Add other flags to the compiler
 target_compile_definitions(hlpt PRIVATE ${GTKMM_CFLAGS_OTHER})
+target_compile_definitions(hlpt PRIVATE ${GLIB_CFLAGS_OTHER})
 target_compile_definitions(hlpt PRIVATE ${LUA_CFLAGS_OTHER})
 
 
 # Setup CMake to use GTK+, tell the compiler where to look for headers
 # and to the linker where to look for libraries
 target_include_directories(hlpt PRIVATE ${GTKMM_INCLUDE_DIRS})
+target_include_directories(hlpt PRIVATE ${GLIB_INCLUDE_DIRS})
 target_include_directories(hlpt PRIVATE ${LUA_INCLUDE_DIRS})
 target_link_directories(hlpt PRIVATE ${GTKMM_LIBRARY_DIRS})
+target_link_directories(hlpt PRIVATE ${GLIB_LIBRARY_DIRS})
 target_link_directories(hlpt PRIVATE ${LUA_LIBRARY_DIRS})

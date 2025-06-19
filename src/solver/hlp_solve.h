@@ -5,8 +5,8 @@
 #include <stdint.h>
 
 enum search_accuracy { ACCURACY_REDUCED=-1, ACCURACY_NORMAL, ACCURACY_INCREASED, ACCURACY_PERFECT };
-enum solve_config_error { HLP_ERROR_BLANK=1, HLP_ERROR_NULL, HLP_ERROR_MALFORMED, HLP_ERROR_TOO_LONG };
-enum hlp_solve_type { HLP_SOLVE_TYPE_EXACT, HLP_SOLVE_TYPE_PARTIAL, HLP_SOLVE_TYPE_RANGED };
+enum solve_config_error { HLP_ERROR_BLANK=1, HLP_ERROR_NULL, HLP_ERROR_MALFORMED, HLP_ERROR_TOO_LONG, HLP_USES_RANGE };
+enum hlp_solve_type { HLP_SOLVE_TYPE_EXACT, HLP_SOLVE_TYPE_PARTIAL };
 
 struct hlp_request {
     uint64_t mins;

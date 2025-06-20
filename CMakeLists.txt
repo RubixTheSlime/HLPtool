@@ -25,6 +25,7 @@ ADD_EXECUTABLE(hlpt
         src/bitonic_sort.c
         src/command/dbin_command.c
         src/command/hex.c
+        src/command/lua_command.c
         src/main.c
         src/redstone.c
         src/search/dbin_random.c

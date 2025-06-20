@@ -12,7 +12,9 @@
 #include "../vector_tools.h"
 #include "../redstone.h"
 #include "../cache.h"
-#include <glib-2.0/glib.h>
+#include <glib.h>
+#include <lua.h>
+#include <lauxlib.h>
 
 struct hlp_solve_globals {
     struct config_ {
@@ -33,6 +35,7 @@ struct hlp_solve_globals {
 };
 
 static int verbosity = 1;
+static enum LAYER_NOTATION layer_notation = false;
 
 int global_max_depth;
 int global_accuracy;
@@ -109,6 +112,34 @@ struct hlp_request parse_hlp_request_str(char *str) {
     return result;
 }
 
+int solve_lua(lua_State *L) {
+    luaL_checktype(L, 1, LUA_TTABLE);
+    enum search_accuracy accuracy = lua_toboolean(L, 2) ? ACCURACY_PERFECT : ACCURACY_NORMAL;
+    uint64_t mins = 0;
+    uint64_t maxs = 0;
+    for (int i = 0; i < 16; i++) {
+        lua_pushinteger(L, i);
+        lua_rawget(L, 1);
+        if (lua_isnil(L, -1)) {
+            mins <<= 4;
+            maxs = (maxs << 4) | 15;
+        } else {
+            int j = lua_tointeger(L, -1);
+            j = j < 0 ? 0 : j > 15 ? 15 : j;
+            mins = (mins << 4) | j;
+            maxs = (maxs << 4) | j;
+        }
+        lua_pop(L, 1);
+    }
+    struct hlp_request request = { mins, maxs, accuracy, 0 };
+
+    uint16_t output[42];
+    int length = solve(request, output, 42, accuracy);
+    c2lua_chain(L, output, length);
+
+    return 1;
+}
+
 static int get_legal_dist_check_mask_partial(struct hlp_solve_globals *globals, __m256i sorted_ymm, int threshhold) {
     __m256i final = _mm256_and_si256(sorted_ymm, LO_HALVES_4_256);
     __m256i current = _mm256_and_si256(_mm256_srli_epi64(sorted_ymm, 4), LO_HALVES_4_256);
@@ -163,7 +194,7 @@ static int batch_apply_and_check_exact(
         }
     }
 
-    return current_output - outputs;
+    return (int) (current_output - outputs);
 }
 
 static int get_min_group(uint64_t mins, uint64_t maxs) {
@@ -472,7 +503,7 @@ void hlp_print_search(char *map) {
             }
             printf(":  ");
         }
-        print_chain(result, length);
+        print_chain(result, length, layer_notation);
         printf("\n");
     }
 }
@@ -521,6 +552,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
             break;
         case ARGP_KEY_SUCCESS:
             verbosity = settings->global->verbosity;
+            layer_notation = settings->global->layer_notation;
             break;
     }
     return 0;

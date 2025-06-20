@@ -1,0 +1,9 @@
+#ifndef GLOBAL_H
+#define GLOBAL_H
+
+enum LAYER_NOTATION {
+    LAYER_NOTATION_STAR,
+    LAYER_NOTATION_V,
+};
+
+#endif

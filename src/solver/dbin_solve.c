@@ -42,6 +42,7 @@ int* bct_low_values = NULL;
 int* bct_high_values = NULL;
 
 static int verbosity;
+static enum LAYER_NOTATION layer_notation;
 static int global_max_depth;
 
 /* BCT Increment
@@ -487,7 +488,7 @@ void dbin_print_solve(uint64_t map) {
     if (verbosity > 0) {
         printf("solution found, length %d:  ", length);
     }
-    print_chain(chain, length);
+    print_chain(chain, length, layer_notation);
     printf("\n");
     if ((verbosity > 0 && ((map | (map >> 32)) & UINT32_MAX) != UINT32_MAX) || verbosity > 2) {
         uint64_t post_hex = apply_hex_chain(IDENTITY_PERM_LE64, chain, length - 1);
@@ -524,6 +525,7 @@ static error_t parse_opt(int key, char* arg, struct argp_state *state) {
             break;
         case ARGP_KEY_SUCCESS:
             verbosity = settings->global->verbosity;
+            layer_notation = settings->global->layer_notation;
             break;
     }
     return 0;

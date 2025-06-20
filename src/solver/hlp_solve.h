@@ -1,5 +1,7 @@
 #ifndef HLP_SOLVE
 #define HLP_SOLVE
+#include <lua.h>
+
 #include "../arg_global.h"
 #include "../redstone.h"
 #include <stdint.h>
@@ -22,6 +24,8 @@ extern const uint64_t broadcast_h16; // 0x1111...
 
 extern int hlp_solve_verbosity;
 
+int solve_lua(lua_State *L);
+
 /* search for a solution for the given map
  * returns length of chain
  */
@@ -41,11 +45,6 @@ uint16_t get_next_valid_layer_id(int group, int prev_layer_id, int index);
 uint16_t get_next_valid_layer_size(int group, int layer_id);
 
 void hlp_print_search(char* map);
-
-
-uint64_t apply_chain(uint64_t start, uint16_t* chain, int length);
-
-void print_chain(uint16_t* chain, int length);
 
 struct arg_settings_solver_hex {
     struct arg_settings_global* global;

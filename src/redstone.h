@@ -2,7 +2,10 @@
 #define REDSTONE_H
 #include <stdint.h>
 #include "arg_global.h"
+#include "global.h"
 #include <immintrin.h>
+#include <lua.h>
+#include <glib.h>
 
 #define HEX_CONFIG_COUNT (16 * 16 * 6)
 
@@ -29,7 +32,12 @@ extern uint32_t dbin_layer128(__m128i map, uint16_t config);
 extern uint32_t dbin_layer64(uint64_t map, uint16_t config);
 extern uint32_t dbin_layer_packed64(uint64_t map, uint16_t config);
 
-extern void print_chain(uint16_t* chain, int length);
+extern char* chain_to_str(const uint16_t* chain, int length, enum LAYER_NOTATION notation);
+extern void print_chain(const uint16_t* chain, int length, enum LAYER_NOTATION notation);
+extern enum LAYER_NOTATION get_layer_notation_by_name(const char* name);
+
+extern int lua2c_chain(lua_State *L, int idx, uint16_t **chain);
+extern void c2lua_chain(lua_State *L, const uint16_t* chain, int length);
 
 
 /* get precomputed layers

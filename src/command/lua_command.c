@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../lua/lua_open.h"
+
 int lua_chain_to_str(lua_State *L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     enum LAYER_NOTATION notation = get_layer_notation_by_name(lua_tostring(L, 2));
@@ -64,7 +66,8 @@ int lua_normalize_chain(lua_State *L) {
 static void exec_lua(const char *filename) {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
-    lua_newtable(L);
+    hlpt_push_main_table(L);
+    // lua_newtable(L);
     lua_pushcfunction(L, lua_eval_chain);
     lua_setfield(L, -2, "eval");
     lua_pushcfunction(L, lua_chain_to_str);

@@ -3,7 +3,7 @@
 #include "vector_tools.h"
 #include "stdio.h"
 #include "time.h"
-#include "stdlib.h"
+#include <stdlib.h>
 #include <glib.h>
 #include <lauxlib.h>
 #include <string.h>

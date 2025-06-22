@@ -7,6 +7,7 @@ cmake_minimum_required(VERSION 3.10)
 # Use the package PkgConfig to detect GTK+ headers/library files
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK REQUIRED gtkmm-3.0)
+pkg_check_modules(GLIB REQUIRED glib-2.0)
 pkg_check_modules(LUA REQUIRED lua5.4)
 
 
@@ -26,11 +27,16 @@ ADD_EXECUTABLE(hlpt
         src/command/dbin_command.c
         src/command/hex.c
         src/command/lua_command.c
+        src/lua/lua_fn_set.c
+        src/lua/lua_hex_fn.c
+        src/lua/lua_hex_set.c
+        src/lua/lua_open.c
         src/main.c
         src/redstone.c
         src/search/dbin_random.c
         src/search/hlp_random.c
         src/solver/dbin_solve.c
+        src/solver/hex_fn.c
         src/solver/hlp_solve.c
         src/vector_tools.c
 )

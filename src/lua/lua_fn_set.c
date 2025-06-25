@@ -13,7 +13,7 @@ static int new_of(lua_State *L) {
         if (is_table) {
             lua_pushinteger(L, i);
             lua_rawget(L, 1);
-            hex_set = *lua_get_hex_set(L, -1);
+            hex_set = *lua_get_hex_set(L, -1, true);
             lua_pop(L, 1);
         } else {
             for (int j = 0; j < 16; j++) {
@@ -49,13 +49,13 @@ static int identity(lua_State *L) {
 }
 
 static int single(lua_State *L) {
-    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 1));
+    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 1, true));
     lua_push_fn_set(L, fn_set_new_containing(hex_fn));
     return 1;
 }
 
 static int get_bit(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
     int input = lua_tointeger(L, 2);
     int output = lua_tointeger(L, 3);
     lua_pushboolean(L, fn_set_get_bit(fn_set, input, output));
@@ -63,7 +63,7 @@ static int get_bit(lua_State *L) {
 }
 
 static int set_bit(lua_State *L) {
-    fn_set_t *fn_set = lua_get_fn_set(L, 1);
+    fn_set_t *fn_set = lua_get_fn_set(L, 1, true);
     int input = lua_tointeger(L, 2);
     int output = lua_tointeger(L, 3);
     int value = lua_toboolean(L, 4);
@@ -72,7 +72,7 @@ static int set_bit(lua_State *L) {
 }
 
 static int with_bit(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
     int input = lua_tointeger(L, 2);
     int output = lua_tointeger(L, 3);
     int value = lua_toboolean(L, 4);
@@ -81,132 +81,144 @@ static int with_bit(lua_State *L) {
 }
 
 static int get_io(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
     int input = lua_tointeger(L, 2);
     lua_push_hex_set(L, fn_set_get_io(fn_set, input));
     return 1;
 }
 
 static int set_io(lua_State *L) {
-    fn_set_t *fn_set = lua_get_fn_set(L, 1);
+    fn_set_t *fn_set = lua_get_fn_set(L, 1, true);
     int input = lua_tointeger(L, 2);
-    hex_set_t value = *lua_get_hex_set(L, 3);
+    hex_set_t value = *lua_get_hex_set(L, 3, true);
     fn_set_set_io(fn_set, input, value);
     return 0;
 }
 
 static int with_io(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
     int input = lua_tointeger(L, 2);
-    hex_set_t value = *lua_get_hex_set(L, 3);
+    hex_set_t value = *lua_get_hex_set(L, 3, true);
     lua_push_fn_set(L, fn_set_with_io(fn_set, input, value));
     return 1;
 }
 
 static int get_oi(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
     int input = lua_tointeger(L, 2);
     lua_push_hex_set(L, fn_set_get_oi(fn_set, input));
     return 1;
 }
 
 static int set_oi(lua_State *L) {
-    fn_set_t *fn_set = lua_get_fn_set(L, 1);
+    fn_set_t *fn_set = lua_get_fn_set(L, 1, true);
     int input = lua_tointeger(L, 2);
-    hex_set_t value = *lua_get_hex_set(L, 3);
+    hex_set_t value = *lua_get_hex_set(L, 3, true);
     fn_set_set_oi(fn_set, input, value);
     return 0;
 }
 
 static int with_oi(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
     int input = lua_tointeger(L, 2);
-    hex_set_t value = *lua_get_hex_set(L, 3);
+    hex_set_t value = *lua_get_hex_set(L, 3, true);
     lua_push_fn_set(L, fn_set_with_oi(fn_set, input, value));
     return 1;
 }
 
 static int is_super_of(lua_State *L) {
-    fn_set_t a = fn_set_load(lua_get_fn_set(L, 1));
-    fn_set_t b = fn_set_load(lua_get_fn_set(L, 2));
+    fn_set_t a = fn_set_load(lua_get_fn_set(L, 1, true));
+    fn_set_t b = fn_set_load(lua_get_fn_set(L, 2, true));
     lua_pushboolean(L, fn_set_is_super(a, b));
     return 1;
 }
 
 static int contains_identity(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
     lua_pushboolean(L, fn_set_contains_identity(fn_set));
     return 1;
 }
 
 static int contains(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
-    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 2));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
+    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 2, true));
     lua_pushboolean(L, fn_set_contains_fn(fn_set, hex_fn));
     return 1;
 }
 
 static int is_empty(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
     lua_pushboolean(L, fn_set_is_equal(fn_set, fn_set_new_empty()));
     return 1;
 }
 
+static int sat(lua_State *L) {
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
+    lua_pushboolean(L, fn_set_sat(fn_set));
+    return 1;
+}
+
 static int is_full(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
     lua_pushboolean(L, fn_set_is_equal(fn_set, fn_set_new_full()));
     return 1;
 }
 
 static int pre_mul(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
-    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 2));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
+    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 2, true));
     lua_push_fn_set(L, fn_set_pre_mul_fn(fn_set, hex_fn));
     return 1;
 }
 
 static int pre_div(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
-    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 2));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
+    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 2, true));
     lua_push_fn_set(L, fn_set_pre_div_fn(fn_set, hex_fn));
     return 1;
 }
 
 static int post_mul(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
-    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 2));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
+    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 2, true));
     lua_push_fn_set(L, fn_set_post_mul_fn(fn_set, hex_fn));
     return 1;
 }
 
 static int post_div(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
-    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 2));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
+    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 2, true));
     lua_push_fn_set(L, fn_set_post_div_fn(fn_set, hex_fn));
     return 1;
 }
 
 static int inverse(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
     lua_push_fn_set(L, fn_set_inverse(fn_set));
     return 1;
 }
 
+static int out_set(lua_State *L) {
+    fn_set_t *fn_set = lua_get_fn_set(L, 1, true);
+    lua_push_hex_set(L, fn_set_out_set(fn_set_load(fn_set)));
+    return 1;
+}
+
 static int clone(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
     lua_push_fn_set(L, fn_set);
     return 1;
 }
 
 static int eq(lua_State *L) {
-    fn_set_t a = fn_set_load(lua_get_fn_set(L, 1));
-    fn_set_t b = fn_set_load(lua_get_fn_set(L, 2));
-    lua_pushboolean(L, fn_set_is_equal(a, b));
+    fn_set_t *a = lua_get_fn_set(L, 1, false);
+    fn_set_t *b = lua_get_fn_set(L, 2, false);
+    lua_pushboolean(L, a != NULL && b != NULL && fn_set_is_equal(fn_set_load(a), fn_set_load(b)));
     return 1;
 }
 
 static int tostring(lua_State *L) {
-    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1));
+    fn_set_t fn_set = fn_set_load(lua_get_fn_set(L, 1, true));
     char str[1024];
     char *p = str;
     p += fn_set_sprint(p, fn_set);
@@ -239,15 +251,17 @@ static const luaL_Reg methods[] = {
     {"contains", contains},
     {"is_empty", is_empty},
     {"is_full", is_full},
+    {"sat", sat},
     {"pre_mul", pre_mul},
     {"post_mul", post_mul},
     {"pre_div", pre_div},
     {"post_div", post_div},
     {"inverse", inverse},
+    {"out_set", out_set},
     {"clone", clone},
     {"__eq", eq},
     {"__tostring", tostring},
     {NULL, NULL}
 };
 
-const struct hlpt_lua_object fn_set_object = {"fn_set", functions, methods};
+const struct hlpt_lua_object_definition fn_set_object_definition = {"fn_set", functions, methods, NULL};

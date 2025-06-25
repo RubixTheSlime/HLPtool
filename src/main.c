@@ -13,6 +13,7 @@
 #include "command/lua_command.h"
 #include "search/hlp_random.h"
 #include "search/dbin_random.h"
+#include "solver/hex_layer.h"
 
 union arg_settings_sub {
     struct arg_settings_solver_hex solver_hex;
@@ -167,7 +168,8 @@ int main(int argc, char** argv) {
         printf("this program requires a CPU that supports AVX2, which yours doesn't. sorry, you're just plain out of luck.\n");
         return 1;
     }
-    /* test(); return 0; */
+    init_hex_layer_data();
+
     setlocale(LC_NUMERIC, "");
 
     struct arg_settings_global settings;

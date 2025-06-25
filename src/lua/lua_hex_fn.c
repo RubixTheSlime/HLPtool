@@ -38,8 +38,8 @@ static int of_constant(lua_State *L) {
 }
 
 static int compose_inner(lua_State *L, int idx1, int idx2) {
-    hex_fn_t *a = lua_get_hex_fn(L, idx1);
-    hex_fn_t *b = lua_get_hex_fn(L, idx2);
+    hex_fn_t *a = lua_get_hex_fn(L, idx1, true);
+    hex_fn_t *b = lua_get_hex_fn(L, idx2, true);
     lua_push_hex_fn(L, hex_fn_compose(hex_fn_load(a), hex_fn_load(b)));
     return 1;
 }
@@ -53,7 +53,7 @@ static int and_then(lua_State *L) {
 }
 
 static int get(lua_State *L) {
-    hex_fn_t *fn = lua_get_hex_fn(L, 1);
+    hex_fn_t *fn = lua_get_hex_fn(L, 1, true);
     int i = clamp_hex(lua_tointeger(L, 2));
     int res = hex_fn_get(hex_fn_load(fn), i);
     lua_pushinteger(L, res);
@@ -64,14 +64,20 @@ static int call(lua_State *L) {
     return get(L);
 }
 
+static int out_set(lua_State *L) {
+    hex_fn_t *fn = lua_get_hex_fn(L, 1, true);
+    lua_push_hex_set(L, hex_fn_out_set(hex_fn_load(fn)));
+    return 1;
+}
+
 static int clone(lua_State *L) {
-    hex_fn_t *fn = lua_get_hex_fn(L, 1);
+    hex_fn_t *fn = lua_get_hex_fn(L, 1, true);
     lua_push_hex_fn(L, hex_fn_load(fn));
     return 1;
 }
 
 static int set(lua_State *L) {
-    hex_fn_t *fn = lua_get_hex_fn(L, 1);
+    hex_fn_t *fn = lua_get_hex_fn(L, 1, true);
     int i = clamp_hex(lua_tointeger(L, 2));
     int j = clamp_hex(lua_tointeger(L, 3));
     hex_fn_set(fn, i, j);
@@ -79,7 +85,7 @@ static int set(lua_State *L) {
 }
 
 static int with(lua_State *L) {
-    hex_fn_t *fn = lua_get_hex_fn(L, 1);
+    hex_fn_t *fn = lua_get_hex_fn(L, 1, true);
     int i = clamp_hex(lua_tointeger(L, 2));
     int j = clamp_hex(lua_tointeger(L, 3));
     lua_push_hex_fn(L, hex_fn_with(hex_fn_load(fn), i, j));
@@ -87,13 +93,13 @@ static int with(lua_State *L) {
 }
 
 static int is_identity(lua_State *L) {
-    hex_fn_t *fn = lua_get_hex_fn(L, 1);
+    hex_fn_t *fn = lua_get_hex_fn(L, 1, true);
     lua_pushboolean(L, hex_fn_is_identity(hex_fn_load(fn)));
     return 1;
 }
 
 static int is_constant(lua_State *L) {
-    hex_fn_t *fn = lua_get_hex_fn(L, 1);
+    hex_fn_t *fn = lua_get_hex_fn(L, 1, true);
     int value = hex_fn_is_constant(hex_fn_load(fn));
     if (value == -1 || lua_gettop(L) < 2) {
         lua_pushboolean(L, value != -1);
@@ -105,14 +111,14 @@ static int is_constant(lua_State *L) {
 }
 
 static int equals(lua_State *L) {
-    hex_fn_t *a = lua_get_hex_fn(L, 1);
-    hex_fn_t *b = lua_get_hex_fn(L, 2);
-    lua_pushboolean(L, hex_fn_is_equal(hex_fn_load(a), hex_fn_load(b)));
+    hex_fn_t *a = lua_get_hex_fn(L, 1, false);
+    hex_fn_t *b = lua_get_hex_fn(L, 2, false);
+    lua_pushboolean(L, a != NULL && b != NULL && hex_fn_is_equal(hex_fn_load(a), hex_fn_load(b)));
     return 1;
 }
 
 static int tostring(lua_State *L) {
-    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 1));
+    hex_fn_t hex_fn = hex_fn_load(lua_get_hex_fn(L, 1, true));
     char str[256];
     char *p = str;
     p += hex_fn_sprint(p, hex_fn);
@@ -136,6 +142,7 @@ static const luaL_Reg methods[] = {
     {"is_constant", is_constant},
     {"get", get},
     {"set", set},
+    {"out_set", out_set},
     {"clone", clone},
     {"__call", call},
     {"__eq", equals},
@@ -143,4 +150,4 @@ static const luaL_Reg methods[] = {
     {NULL, NULL}
 };
 
-const struct hlpt_lua_object hex_fn_object = {"hex_fn", functions, methods};
+const struct hlpt_lua_object_definition hex_fn_object_definition = {"hex_fn", functions, methods, NULL};

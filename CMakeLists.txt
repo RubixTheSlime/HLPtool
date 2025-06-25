@@ -29,6 +29,7 @@ ADD_EXECUTABLE(hlpt
         src/command/lua_command.c
         src/lua/lua_fn_set.c
         src/lua/lua_hex_fn.c
+        src/lua/lua_hex_layer.c
         src/lua/lua_hex_set.c
         src/lua/lua_open.c
         src/main.c
@@ -37,6 +38,7 @@ ADD_EXECUTABLE(hlpt
         src/search/hlp_random.c
         src/solver/dbin_solve.c
         src/solver/hex_fn.c
+        src/solver/hex_layer.c
         src/solver/hlp_solve.c
         src/vector_tools.c
 )

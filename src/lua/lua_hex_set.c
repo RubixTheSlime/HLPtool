@@ -40,7 +40,7 @@ static int from_keys(lua_State* L) {
 }
 
 static int to_values(lua_State* L) {
-    hex_set_t hex_set = *lua_get_hex_set(L, 1);
+    hex_set_t hex_set = *lua_get_hex_set(L, 1, true);
     lua_newtable(L);
     int index = 1;
     for (int i = 0; i < 16; i++) {
@@ -72,7 +72,7 @@ static int single(lua_State* L) {
 
 
 static int to_keys(lua_State* L) {
-    hex_set_t hex_set = *lua_get_hex_set(L, 1);
+    hex_set_t hex_set = *lua_get_hex_set(L, 1, true);
     lua_newtable(L);
     for (int i = 0; i < 16; i++) {
         if (!hex_set_get(hex_set, i)) {
@@ -86,14 +86,14 @@ static int to_keys(lua_State* L) {
 }
 
 static int get(lua_State *L) {
-    hex_set_t *hex_set = lua_get_hex_set(L, 1);
+    hex_set_t *hex_set = lua_get_hex_set(L, 1, true);
     int i = lua_tointeger(L, 2);
     lua_pushboolean(L, hex_set_get(*hex_set, i));
     return 1;
 }
 
 static int add(lua_State *L) {
-    hex_set_t *hex_set = lua_get_hex_set(L, 1);
+    hex_set_t *hex_set = lua_get_hex_set(L, 1, true);
     int i = lua_tointeger(L, 2);
     bool value = true;
     if (lua_gettop(L) > 2) {
@@ -104,14 +104,14 @@ static int add(lua_State *L) {
 }
 
 static int mremove(lua_State *L) {
-    hex_set_t *hex_set = lua_get_hex_set(L, 1);
+    hex_set_t *hex_set = lua_get_hex_set(L, 1, true);
     int i = lua_tointeger(L, 2);
     hex_set_set(hex_set, i, false);
     return 0;
 }
 
 static int with(lua_State *L) {
-    hex_set_t hex_set = *lua_get_hex_set(L, 1);
+    hex_set_t hex_set = *lua_get_hex_set(L, 1, true);
     int i = lua_tointeger(L, 2);
     bool value = true;
     if (lua_gettop(L) > 2) {
@@ -122,60 +122,60 @@ static int with(lua_State *L) {
 }
 
 static int without(lua_State *L) {
-    hex_set_t hex_set = *lua_get_hex_set(L, 1);
+    hex_set_t hex_set = *lua_get_hex_set(L, 1, true);
     int i = lua_tointeger(L, 2);
     lua_push_hex_set(L, hex_set_with(hex_set, i, false));
     return 1;
 }
 
 static int is_empty(lua_State *L) {
-    hex_set_t hex_set = *lua_get_hex_set(L, 1);
+    hex_set_t hex_set = *lua_get_hex_set(L, 1, true);
     lua_pushboolean(L, hex_set_is_empty(hex_set));
     return 1;
 }
 
 static int is_full(lua_State *L) {
-    hex_set_t hex_set = *lua_get_hex_set(L, 1);
+    hex_set_t hex_set = *lua_get_hex_set(L, 1, true);
     lua_pushboolean(L, hex_set_is_full(hex_set));
     return 1;
 }
 
 static int munion(lua_State *L) {
-    hex_set_t a = *lua_get_hex_set(L, 1);
-    hex_set_t b = *lua_get_hex_set(L, 2);
+    hex_set_t a = *lua_get_hex_set(L, 1, true);
+    hex_set_t b = *lua_get_hex_set(L, 2, true);
     lua_push_hex_set(L, hex_set_union(a, b));
     return 1;
 }
 
 static int intersect(lua_State *L) {
-    hex_set_t a = *lua_get_hex_set(L, 1);
-    hex_set_t b = *lua_get_hex_set(L, 2);
+    hex_set_t a = *lua_get_hex_set(L, 1, true);
+    hex_set_t b = *lua_get_hex_set(L, 2, true);
     lua_push_hex_set(L, hex_set_intersect(a, b));
     return 1;
 }
 
 static int diff(lua_State *L) {
-    hex_set_t a = *lua_get_hex_set(L, 1);
-    hex_set_t b = *lua_get_hex_set(L, 2);
+    hex_set_t a = *lua_get_hex_set(L, 1, true);
+    hex_set_t b = *lua_get_hex_set(L, 2, true);
     lua_push_hex_set(L, hex_set_diff(a, b));
     return 1;
 }
 
 static int sym_diff(lua_State *L) {
-    hex_set_t a = *lua_get_hex_set(L, 1);
-    hex_set_t b = *lua_get_hex_set(L, 2);
+    hex_set_t a = *lua_get_hex_set(L, 1, true);
+    hex_set_t b = *lua_get_hex_set(L, 2, true);
     lua_push_hex_set(L, hex_set_sym_diff(a, b));
     return 1;
 }
 
 static int complement(lua_State *L) {
-    hex_set_t hex_set = *lua_get_hex_set(L, 1);
+    hex_set_t hex_set = *lua_get_hex_set(L, 1, true);
     lua_push_hex_set(L, hex_set_complement(hex_set));
     return 1;
 }
 
 static int clone(lua_State *L) {
-    hex_set_t hex_set = *lua_get_hex_set(L, 1);
+    hex_set_t hex_set = *lua_get_hex_set(L, 1, true);
     lua_push_hex_set(L, hex_set);
     return 1;
 }
@@ -201,20 +201,20 @@ static int sub(lua_State *L) {
 }
 
 static int len(lua_State *L) {
-    hex_set_t hex_set = *lua_get_hex_set(L, 1);
+    hex_set_t hex_set = *lua_get_hex_set(L, 1, true);
     lua_pushinteger(L, hex_set_len(hex_set));
     return 1;
 }
 
 static int equals(lua_State *L) {
-    hex_set_t a = *lua_get_hex_set(L, 1);
-    hex_set_t b = *lua_get_hex_set(L, 2);
-    lua_pushboolean(L, a == b);
+    hex_set_t *a = lua_get_hex_set(L, 1, false);
+    hex_set_t *b = lua_get_hex_set(L, 2, false);
+    lua_pushboolean(L, a != NULL && b != NULL && *a == *b);
     return 1;
 }
 
 static int tostring(lua_State *L) {
-    hex_set_t hex_set = *lua_get_hex_set(L, 1);
+    hex_set_t hex_set = *lua_get_hex_set(L, 1, true);
     char str[256];
     char *p = str;
     p += hex_set_sprint(p, hex_set);
@@ -260,4 +260,4 @@ static const luaL_Reg methods[] = {
     {NULL, NULL}
 };
 
-const struct hlpt_lua_object hex_set_object = {"hex_set", functions, methods};
+const struct hlpt_lua_object_definition hex_set_object_definition = {"hex_set", functions, methods, NULL};

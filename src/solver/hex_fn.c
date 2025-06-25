@@ -73,6 +73,10 @@ bool hex_fn_is_equal(hex_fn_t a, hex_fn_t b) {
     return _mm_movemask_epi8(_mm_cmpeq_epi64(a, b)) == 0xffff;
 }
 
+hex_set_t hex_fn_out_set(hex_fn_t hex_fn) {
+    return fn_set_out_set(fn_set_new_containing(hex_fn));
+}
+
 packed_hex_fn_t hex_fn_pack(hex_fn_t hex_fn) {
     return pack_xmm_to_uint(hex_fn);
 }
@@ -186,7 +190,11 @@ bool fn_set_is_super(fn_set_t super, fn_set_t sub) {
 }
 
 bool fn_set_is_equal(fn_set_t a, fn_set_t b) {
-    return _mm256_movemask_epi8(_mm256_cmpeq_epi16(_mm256_cmpeq_epi64(a, b), _mm256_setzero_si256())) == 0;
+    return fn_set_sat(_mm256_cmpeq_epi64(a, b));
+}
+
+bool fn_set_sat(fn_set_t fn_set) {
+    return _mm256_movemask_epi8(_mm256_cmpeq_epi16(fn_set, _mm256_setzero_si256())) == 0;
 }
 
 static bool fn_set_contains_singleton(fn_set_t set, fn_set_t fn) {
@@ -258,6 +266,15 @@ fn_set_t fn_set_inverse(fn_set_t set) {
     fn_set_t res;
     for (int i = 0; i < 16; i++) {
         fn_set_set_io(&res, i, fn_set_get_oi(set, i));
+    }
+    return res;
+}
+
+hex_set_t fn_set_out_set(fn_set_t fn_set) {
+    // todo optimize
+    hex_set_t res = hex_set_empty();
+    for (int i = 0; i < 16; i++) {
+        res = hex_set_union(res, fn_set_get_io(fn_set, i));
     }
     return res;
 }

@@ -34,6 +34,8 @@ extern int hex_fn_is_constant(hex_fn_t hex_fn);
 
 extern bool hex_fn_is_equal(hex_fn_t a, hex_fn_t b);
 
+extern hex_set_t hex_fn_out_set(hex_fn_t hex_fn);
+
 extern packed_hex_fn_t hex_fn_pack(hex_fn_t hex_fn);
 
 extern hex_fn_t hex_fn_unpack(packed_hex_fn_t packed_hex_fn);
@@ -80,6 +82,8 @@ extern bool fn_set_is_super(fn_set_t super, fn_set_t sub);
 
 extern bool fn_set_is_equal(fn_set_t super, fn_set_t sub);
 
+extern bool fn_set_sat(fn_set_t fn_set);
+
 extern bool fn_set_contains_identity(fn_set_t set);
 
 extern bool fn_set_contains_fn(fn_set_t set, hex_fn_t hex_fn);
@@ -93,6 +97,8 @@ extern fn_set_t fn_set_post_mul_fn(fn_set_t set, hex_fn_t hex_fn);
 extern fn_set_t fn_set_post_div_fn(fn_set_t set, hex_fn_t hex_fn);
 
 extern fn_set_t fn_set_inverse(fn_set_t set);
+
+extern hex_set_t fn_set_out_set(fn_set_t fn_set);
 
 extern fn_set_t fn_set_load(fn_set_t *unaligned_fn_set);
 

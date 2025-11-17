@@ -53,6 +53,7 @@ function IsComposite(x)
     return x ~= 1 and not IsPrime(x)
 end
 
+-- note: during the current release, this is effectively useless
 function Hex_set()
     local primes = hex_set.from_values({ 2, 3, 5, 7, 11, 13 })
     local evens = hex_set.from_keys(function(x) return x % 2 == 0 end)

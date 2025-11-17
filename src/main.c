@@ -30,7 +30,7 @@ struct subcommand_entry {
 };
 
 
-const char *argp_program_version = "version 1.1-dev";
+const char *argp_program_version = "version 1.2";
 
 int global_verbosity;
 bool global_use_star_notation;

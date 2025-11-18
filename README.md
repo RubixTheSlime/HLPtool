@@ -34,7 +34,7 @@ result found, length 13:  9, *8;  4, *4;  E, *F;  5, *5;  3, *3;  E, *F;  7, *8;
 ```
 
 # Lua Scripting
-Possibly the most exciting new feature, you can perform a lot of automated solving using lua scripts. See `test/test.lua` for a few examples on how to do this, and what options are available. Running it is simple:
+Possibly the most exciting new feature, you can perform a lot of automated solving using lua scripts (Lua 5.4 to be exact). See `test/test.lua` for a few examples on how to do this, and what options are available. Running it is simple:
 ```ShellSession
 $ ./hlpt lua test/test.lua
 [several lines of output]

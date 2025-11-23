@@ -132,12 +132,13 @@ struct precomputed_hex_layer *precompute_hex_layers(int group, int direction) {
 
             if (g_hash_table_contains(unique_next_layers, &output)) continue;
             table_data[next_layer_count] = output;
-            g_hash_table_add(unique_next_layers, table_data + next_layer_count);
+            // g_hash_table_add(unique_next_layers, table_data + next_layer_count);
 
             next_layer_indices[next_layer_count] = second_layer_i;
             next_layer_count++;
             first_layer->next_layer_count++;
         }
+        // g_hash_table_remove_all(unique_next_layers);
         // the maps require certain alignment to ensure they don't overlap, as
         // they are expected to be handled in bulk with vector processing
         map_spaces_needed += round_up(first_layer->next_layer_count, MAP_ARRAY_ALIGNMENT);

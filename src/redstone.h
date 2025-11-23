@@ -7,7 +7,7 @@
 #include <lua.h>
 #include <glib.h>
 
-#define HEX_CONFIG_COUNT (16 * 16 * 6)
+#define HEX_CONFIG_COUNT (16 * 16 * 4)
 
 struct precomputed_hex_layer {
     uint64_t map;

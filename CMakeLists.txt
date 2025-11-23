@@ -1,8 +1,7 @@
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 3.10)
 project(HLPtool C)
 
 # Set the minimum version of cmake required to build this project
-cmake_minimum_required(VERSION 3.10)
 
 # Use the package PkgConfig to detect GTK+ headers/library files
 find_package(PkgConfig REQUIRED)

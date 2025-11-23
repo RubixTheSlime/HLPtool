@@ -402,7 +402,7 @@ static int dfs(struct dbin_solve_globals* globals, struct precomputed_hex_layer*
         if (uint4_array_get(globals->config.prune_table, get_ternary_index(next_remaining_map >> 16, next_remaining_map >> 48)) > remaining_depth) continue;
 
         // cache check
-        if (cache_check(&main_cache, next_remaining_map, 99 - remaining_depth)) continue;
+        if (cache_check(&main_cache, next_remaining_map, 99 - remaining_depth, NULL)) continue;
         // passed, check further
         
         int success = dfs(globals, next_layer, next_remaining_map, remaining_depth - 1);

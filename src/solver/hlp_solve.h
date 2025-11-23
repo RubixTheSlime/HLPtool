@@ -17,6 +17,12 @@ struct hlp_request {
     enum solve_config_error error;
 };
 
+struct hlp_lua_request {
+    long *counter;
+    long max_count;
+    long max_millis;
+};
+
 // the start position, or at least the pretty one that can be used outside the solver
 extern const uint64_t hlp_start_pos;
 
@@ -26,10 +32,12 @@ extern int hlp_solve_verbosity;
 
 int solve_lua(lua_State *L);
 
+int count_solve_lua(lua_State *L);
+
 /* search for a solution for the given map
  * returns length of chain
  */
-int solve(struct hlp_request request, uint16_t* output_chain, int max_depth, enum search_accuracy accuracy);
+int solve(struct hlp_request request, uint16_t* output_chain, int max_depth, enum search_accuracy accuracy, struct hlp_lua_request lua_request);
 
 /* parse the string into a solve request
  */

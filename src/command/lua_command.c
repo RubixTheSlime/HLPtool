@@ -61,18 +61,20 @@ int lua_normalize_chain(lua_State *L) {
     return 1;
 }
 
+const luaL_Reg hlp_fns[] = {
+    {"eval", lua_eval_chain},
+    {"chain_to_str", lua_chain_to_str},
+    {"normalize_chain", lua_normalize_chain},
+    {"solve", solve_lua},
+    {"count_solve", count_solve_lua},
+    {NULL, NULL}
+};
+
 static void exec_lua(const char *filename) {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
     lua_newtable(L);
-    lua_pushcfunction(L, lua_eval_chain);
-    lua_setfield(L, -2, "eval");
-    lua_pushcfunction(L, lua_chain_to_str);
-    lua_setfield(L, -2, "chain_to_str");
-    lua_pushcfunction(L, lua_normalize_chain);
-    lua_setfield(L, -2, "normalize_chain");
-    lua_pushcfunction(L, solve_lua);
-    lua_setfield(L, -2, "solve");
+    luaL_setfuncs(L, hlp_fns, 0);
     lua_setglobal(L, "hlp");
     int error = luaL_dofile(L, filename);
     if (error) {

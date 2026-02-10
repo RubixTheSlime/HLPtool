@@ -33,6 +33,23 @@ searching for 3141 5926 5358 9793
 result found, length 13:  9, *8;  4, *4;  E, *F;  5, *5;  3, *3;  E, *F;  7, *8;  4, 2;  6, *7;  A, *D;  F, *F;  ^7, *D;  *3, 3
 ```
 
+## Usage Example
+
+Let's create a function that adds 1 to signal strength and takes modulo 16. The function will look like this: `123456789abcdef0`
+
+Run `hlpt`:
+```
+➜  build git:(main) ✗ ./hlpt hex 123456789abcdef0
+searching for 1234 5678 9ABC DEF0
+result found, length 2:  F^, E>*;  F^*, F>*
+```
+
+Now the Minecraft build will look like this:
+
+![hlp example screenshot](https://i.ibb.co/1tWT1gyk/hlp2.png)
+
+So `F^, E>*` is the first layer counting from input and `F^*, F>*` is the second one. Take notice that one of the comparators is in the compare mod as denoted by missing astersisk in the notation of the first layer.
+
 # Lua Scripting
 Possibly the most exciting new feature, you can perform a lot of automated solving using lua scripts (Lua 5.4 to be exact). See `test/test.lua` for a few examples on how to do this, and what options are available. Running it is simple:
 ```ShellSession
@@ -72,4 +89,34 @@ result found, length 10:  8^, 7>*;  0^, F>*;  C^, B>*;  D^, 8>*;  7^, B>*;  F^, 
 The tool is also equipped with a dual binary solver, which can be accessed using `hlpt 2bin`. The main format is to list out all the first bits (starting at 0), then the second bits. However, this can be changed with `-t` to group the input by pairs instead of by output index, and `-s` to swap the bits, as if the chain was built mirrored. Like the hex solver, `.`, `x`, and leaving out the end can be used for wildcards. Unlike the hex solver, there is no `-p`, as the solver always produces optimal length solutions (barring unfound bugs).
 
 # Compiling
-honestly, i forgor. something with cmake.
+
+## Install CMake 3.31 or higher
+
+Linux repositories often contain old versions of cmake, so use this page for the latest version https://cmake.org/download/
+
+Alternatively:
+
+```
+sudo apt-get update
+sudo apt-get install cmake
+```
+
+## Compile
+
+1. **Create a build directory:**
+   ```bash
+   mkdir build
+   cd build
+   ```
+
+2. **Configure the project:**
+   ```bash
+   cmake ..
+   ```
+
+3. **Build the project:**
+   ```bash
+   make
+   ```
+
+   The executable will be created as `hlpt` in the build directory.
